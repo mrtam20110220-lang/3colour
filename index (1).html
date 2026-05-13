@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三原色光互動程式</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+      color: #ffffff;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-bottom: 24px;
+    }
+
+    /* ── Tab navigation ── */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .tab-btn {
+      padding: 10px 32px;
+      border: 2px solid #555;
+      border-radius: 30px;
+      background: transparent;
+      color: #ccc;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .tab-btn.active {
+      background: #ffffff22;
+      border-color: #fff;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .tab-btn:hover:not(.active) {
+      border-color: #aaa;
+      color: #fff;
+    }
+
+    /* ── Panel containers ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ══════════════════════════════
+       PANEL 1 – Additive colour mixing
+       ══════════════════════════════ */
+    .mixing-stage {
+      position: relative;
+      width: 480px;
+      height: 480px;
+      margin: 0 auto 24px;
+    }
+
+    .mixing-stage svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .light-toggles {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .toggle-btn {
+      width: 120px;
+      padding: 10px 0;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      color: #fff;
+      text-shadow: 0 1px 3px #0006;
+    }
+
+    .toggle-btn:active { transform: scale(0.96); }
+    .toggle-btn.red-btn   { background: #cc2200; border-color: #ff4422; }
+    .toggle-btn.green-btn { background: #006600; border-color: #22cc44; }
+    .toggle-btn.blue-btn  { background: #0033cc; border-color: #4488ff; }
+    .toggle-btn.off { opacity: 0.35; }
+
+    .mix-info {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #ffffff0d;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .mix-info h3 { margin-bottom: 10px; font-size: 1rem; color: #ccc; }
+
+    .mix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .mix-table th, .mix-table td {
+      padding: 6px 10px;
+      border: 1px solid #ffffff22;
+      text-align: center;
+    }
+
+    .mix-table th { background: #ffffff18; color: #aaa; }
+
+    .swatch {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid #fff4;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* ══════════════════════════════
+       PANEL 2 – Colour under light
+       ══════════════════════════════ */
+    .panel2-layout {
+      display: flex;
+      gap: 24px;
+      max-width: 980px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Left: light selector */
+    .light-selector {
+      background: #ffffff0d;
+      border-radius: 14px;
+      padding: 20px;
+      min-width: 180px;
+      flex: 0 0 180px;
+    }
+
+    .light-selector h3 {
+      font-size: 1rem;
+      margin-bottom: 14px;
+      color: #ccc;
+      text-align: center;
+    }
+
+    /* Section divider inside selector */
+    .selector-divider {
+      font-size: 0.72rem;
+      color: #666;
+      text-align: center;
+      margin: 10px 0 6px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .light-radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .light-radio {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .light-radio input { display: none; }
+
+    .light-radio .dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #fff6;
+      flex-shrink: 0;
+    }
+
+    /* Selected states for each light */
+    .light-radio.sel-red     { border-color: #ff4422; background: #ff220022; }
+    .light-radio.sel-green   { border-color: #22cc44; background: #22cc4422; }
+    .light-radio.sel-blue    { border-color: #4488ff; background: #4488ff22; }
+    .light-radio.sel-yellow  { border-color: #ffee00; background: #ffee0022; }
+    .light-radio.sel-magenta { border-color: #ff44ff; background: #ff44ff22; }
+    .light-radio.sel-cyan    { border-color: #00ffee; background: #00ffee22; }
+    .light-radio.sel-white   { border-color: #ffffff; background: #ffffff18; }
+
+    /* Right: colour swatches grid */
+    .swatch-grid-wrap {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .swatch-grid-wrap h3 {
+      font-size: 1rem;
+      margin-bottom: 14px;
+      color: #ccc;
+      text-align: center;
+    }
+
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .color-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #ffffff22;
+      transition: transform 0.15s;
+      cursor: default;
+    }
+
+    .color-card:hover { transform: scale(1.04); }
+
+    .card-top {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 1px 4px #0008;
+      transition: background 0.35s;
+    }
+
+    .card-bottom {
+      background: #ffffff0f;
+      padding: 7px 8px;
+      font-size: 0.75rem;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .card-bottom .orig-label { color: #aaa; font-size: 0.7rem; }
+    .card-bottom .result-label { color: #fff; font-weight: bold; font-size: 0.8rem; }
+
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin: 3px 0;
+      font-size: 0.7rem;
+      color: #ccc;
+    }
+
+    /* ── Explanation box ── */
+    .explanation {
+      max-width: 980px;
+      margin: 20px auto 0;
+      background: #ffffff0d;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: #bbb;
+    }
+
+    .explanation strong { color: #fff; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .mixing-stage { width: 320px; height: 320px; }
+      .swatch-grid { grid-template-columns: repeat(2, 1fr); }
+      .panel2-layout { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔴🟢🔵 三原色光互動程式</h1>
+<p class="subtitle">加色混合（Additive Colour Mixing）互動示範</p>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab(1)">功能一：三原色疊加</button>
+  <button class="tab-btn" onclick="switchTab(2)">功能二：色光照射效果</button>
+</div>
+
+<!-- ══════════ PANEL 1 ══════════ -->
+<div id="panel1" class="panel active">
+
+  <div class="light-toggles">
+    <button class="toggle-btn red-btn"   id="btnR" onclick="toggleLight('R')">紅光 (R)</button>
+    <button class="toggle-btn green-btn" id="btnG" onclick="toggleLight('G')">綠光 (G)</button>
+    <button class="toggle-btn blue-btn"  id="btnB" onclick="toggleLight('B')">藍光 (B)</button>
+  </div>
+
+  <div class="mixing-stage">
+    <svg id="mixSvg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="400" fill="#111"/>
+      <circle id="circR" cx="200" cy="148" r="130" fill="#ff0000" style="mix-blend-mode:screen; opacity:0.95"/>
+      <circle id="circG" cx="143" cy="252" r="130" fill="#00ff00" style="mix-blend-mode:screen; opacity:0.95"/>
+      <circle id="circB" cx="257" cy="252" r="130" fill="#0000ff" style="mix-blend-mode:screen; opacity:0.95"/>
+      <text id="lblR"   x="200" y="100"  text-anchor="middle" fill="white" font-size="18" font-weight="bold">R</text>
+      <text id="lblG"   x="110" y="290"  text-anchor="middle" fill="white" font-size="18" font-weight="bold">G</text>
+      <text id="lblB"   x="290" y="290"  text-anchor="middle" fill="white" font-size="18" font-weight="bold">B</text>
+      <text id="lblRG"  x="172" y="196"  text-anchor="middle" fill="white" font-size="14" opacity="0">黃</text>
+      <text id="lblRB"  x="228" y="196"  text-anchor="middle" fill="white" font-size="14" opacity="0">洋紅</text>
+      <text id="lblGB"  x="200" y="278"  text-anchor="middle" fill="white" font-size="14" opacity="0">青</text>
+      <text id="lblRGB" x="200" y="230"  text-anchor="middle" fill="white" font-size="14" opacity="0">白</text>
+    </svg>
+  </div>
+
+  <div class="mix-info">
+    <h3>目前疊加結果</h3>
+    <table class="mix-table">
+      <thead>
+        <tr><th>區域</th><th>顏色</th><th>說明</th></tr>
+      </thead>
+      <tbody id="mixTbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ══════════ PANEL 2 ══════════ -->
+<div id="panel2" class="panel">
+
+  <div class="panel2-layout">
+
+    <div class="light-selector">
+      <h3>選擇照射光源</h3>
+      <div class="light-radio-group" id="lightRadioGroup">
+
+        <div class="selector-divider">── 原色光 ──</div>
+
+        <label class="light-radio sel-red" id="lr-red">
+          <input type="radio" name="lightColor" value="red" checked onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#ff2200;"></span>紅光
+        </label>
+        <label class="light-radio" id="lr-green">
+          <input type="radio" name="lightColor" value="green" onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#00cc33;"></span>綠光
+        </label>
+        <label class="light-radio" id="lr-blue">
+          <input type="radio" name="lightColor" value="blue" onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#2255ff;"></span>藍光
+        </label>
+
+        <div class="selector-divider">── 混合色光 ──</div>
+
+        <label class="light-radio" id="lr-yellow">
+          <input type="radio" name="lightColor" value="yellow" onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#ffee00;"></span>黃光
+        </label>
+        <label class="light-radio" id="lr-magenta">
+          <input type="radio" name="lightColor" value="magenta" onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#ff44ff;"></span>洋紅光
+        </label>
+        <label class="light-radio" id="lr-cyan">
+          <input type="radio" name="lightColor" value="cyan" onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#00ffee;"></span>青光
+        </label>
+
+        <div class="selector-divider">── 全色光 ──</div>
+
+        <label class="light-radio" id="lr-white">
+          <input type="radio" name="lightColor" value="white" onchange="updateLightEffect()"/>
+          <span class="dot" style="background:#ffffff;"></span>白光
+        </label>
+
+      </div>
+    </div>
+
+    <div class="swatch-grid-wrap">
+      <h3>各顏色在色光下的呈現</h3>
+      <div class="swatch-grid" id="swatchGrid"></div>
+    </div>
+
+  </div>
+
+  <div class="explanation" id="explanationBox"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════
+
+// Surface colours (what the object reflects)
+const SURFACES = [
+  { id:'red',     name:'紅',   rgb:[255,  0,  0] },
+  { id:'green',   name:'綠',   rgb:[  0,255,  0] },
+  { id:'blue',    name:'藍',   rgb:[  0,  0,255] },
+  { id:'yellow',  name:'黃',   rgb:[255,255,  0] },
+  { id:'cyan',    name:'青',   rgb:[  0,255,255] },
+  { id:'magenta', name:'洋紅', rgb:[255,  0,255] },
+  { id:'white',   name:'白',   rgb:[255,255,255] },
+];
+
+// Light sources as RGB multipliers [r,g,b] each 0 or 1
+const LIGHTS = {
+  red:     { label:'紅光',   rgb:[1,0,0], hex:'#ff2200' },
+  green:   { label:'綠光',   rgb:[0,1,0], hex:'#00cc33' },
+  blue:    { label:'藍光',   rgb:[0,0,1], hex:'#2255ff' },
+  yellow:  { label:'黃光',   rgb:[1,1,0], hex:'#ffee00' },
+  magenta: { label:'洋紅光', rgb:[1,0,1], hex:'#ff44ff' },
+  cyan:    { label:'青光',   rgb:[0,1,1], hex:'#00ffee' },
+  white:   { label:'白光',   rgb:[1,1,1], hex:'#ffffff' },
+};
+
+// ═══════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+function switchTab(n) {
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i+1===n));
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i+1===n));
+}
+
+// ═══════════════════════════════════════════════════════
+//  PANEL 1 – Additive mixing
+// ═══════════════════════════════════════════════════════
+const lights = { R:true, G:true, B:true };
+
+function toggleLight(ch) {
+  lights[ch] = !lights[ch];
+  document.getElementById('btn'+ch).classList.toggle('off', !lights[ch]);
+  renderMix();
+}
+
+function setOpacity(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.style.opacity = val;
+}
+
+function renderMix() {
+  const R=lights.R, G=lights.G, B=lights.B;
+  setOpacity('circR', R ? 0.95 : 0);
+  setOpacity('circG', G ? 0.95 : 0);
+  setOpacity('circB', B ? 0.95 : 0);
+  setOpacity('lblR',  R ? 1 : 0);
+  setOpacity('lblG',  G ? 1 : 0);
+  setOpacity('lblB',  B ? 1 : 0);
+  setOpacity('lblRG',  R&&G&&!B ? 1 : 0);
+  setOpacity('lblRB',  R&&!G&&B ? 1 : 0);
+  setOpacity('lblGB',  !R&&G&&B ? 1 : 0);
+  setOpacity('lblRGB', R&&G&&B  ? 1 : 0);
+
+  const rows = [];
+  if (R) rows.push({ zone:'紅光區',   color:'#ff0000', name:'紅 (Red)' });
+  if (G) rows.push({ zone:'綠光區',   color:'#00ff00', name:'綠 (Green)' });
+  if (B) rows.push({ zone:'藍光區',   color:'#0000ff', name:'藍 (Blue)' });
+  if (R&&G) rows.push({ zone:'紅+綠疊加', color:'#ffff00', name:'黃 (Yellow)' });
+  if (R&&B) rows.push({ zone:'紅+藍疊加', color:'#ff00ff', name:'洋紅 (Magenta)' });
+  if (G&&B) rows.push({ zone:'綠+藍疊加', color:'#00ffff', name:'青 (Cyan)' });
+  if (R&&G&&B) rows.push({ zone:'三色疊加',  color:'#ffffff', name:'白 (White)' });
+
+  const tbody = document.getElementById('mixTbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:#888">（所有光源已關閉）</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.zone}</td>
+      <td><span class="swatch" style="background:${r.color}"></span></td>
+      <td>${r.name}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PANEL 2 – Colour under coloured light
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Apply light to a surface colour.
+ * Each RGB channel of the surface is multiplied by the
+ * corresponding channel of the light source (0 or 1).
+ * Result: only channels present in the light are reflected.
+ */
+function applyLight(surfaceRGB, lightKey) {
+  const lm = LIGHTS[lightKey].rgb;
+  return [
+    Math.round(surfaceRGB[0] * lm[0]),
+    Math.round(surfaceRGB[1] * lm[1]),
+    Math.round(surfaceRGB[2] * lm[2]),
+  ];
+}
+
+function rgbToHex([r,g,b]) {
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+function rgbToName([r,g,b]) {
+  if (r===0   && g===0   && b===0)   return '黑色（無反射）';
+  if (r===255 && g===255 && b===255) return '白色';
+  if (r>0  && g===0 && b===0)  return '紅色';
+  if (r===0 && g>0  && b===0)  return '綠色';
+  if (r===0 && g===0 && b>0)   return '藍色';
+  if (r>0  && g>0   && b===0)  return '黃色';
+  if (r===0 && g>0  && b>0)    return '青色';
+  if (r>0  && g===0 && b>0)    return '洋紅色';
+  return `RGB(${r},${g},${b})`;
+}
+
+function getSelectedLight() {
+  return document.querySelector('input[name="lightColor"]:checked').value;
+}
+
+function updateLightEffect() {
+  // Update radio label highlight
+  Object.keys(LIGHTS).forEach(k => {
+    const el = document.getElementById('lr-'+k);
+    if (el) el.className = 'light-radio';
+  });
+  const sel = getSelectedLight();
+  const el = document.getElementById('lr-'+sel);
+  if (el) el.classList.add('sel-'+sel);
+
+  // Rebuild swatch grid
+  const grid = document.getElementById('swatchGrid');
+  grid.innerHTML = '';
+
+  SURFACES.forEach(col => {
+    const resultRGB = applyLight(col.rgb, sel);
+    const origHex   = rgbToHex(col.rgb);
+    const resHex    = rgbToHex(resultRGB);
+    const resName   = rgbToName(resultRGB);
+    const lightInfo = LIGHTS[sel];
+
+    const card = document.createElement('div');
+    card.className = 'color-card';
+    card.innerHTML = `
+      <div class="card-top" style="background:${resHex}">
+        ${resHex==='#000000' ? '<span style="color:#444;font-size:1.2rem">●</span>' : ''}
+      </div>
+      <div class="card-bottom">
+        <div class="orig-label">原色：<strong style="color:${origHex==='#000000'?'#888':origHex}">${col.name}</strong></div>
+        <div class="arrow-row">
+          <span style="color:${lightInfo.hex}">${lightInfo.label}照射</span>
+          <span>→</span>
+        </div>
+        <div class="result-label">${resName}</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  buildExplanation(sel);
+}
+
+// ── Explanation text for each light source ──
+const EXPLANATIONS = {
+  red: {
+    intro: '紅光只含<strong>紅色</strong>波長（R=1, G=0, B=0）。物體只能反射其本身含有的紅色分量；不含紅色分量的物體因無可反射的波長而呈現<strong>黑色</strong>。',
+    rows: [
+      ['紅','紅色','含R分量，完整反射'],
+      ['綠','黑色','不含R分量，無法反射'],
+      ['藍','黑色','不含R分量，無法反射'],
+      ['黃（R+G）','紅色','含R分量，G分量因光源無G而消失'],
+      ['青（G+B）','黑色','不含R分量，無法反射'],
+      ['洋紅（R+B）','紅色','含R分量，B分量因光源無B而消失'],
+      ['白（R+G+B）','紅色','只有R分量可被反射'],
+    ]
+  },
+  green: {
+    intro: '綠光只含<strong>綠色</strong>波長（R=0, G=1, B=0）。物體只能反射其本身含有的綠色分量；不含綠色分量的物體呈現<strong>黑色</strong>。',
+    rows: [
+      ['紅','黑色','不含G分量，無法反射'],
+      ['綠','綠色','含G分量，完整反射'],
+      ['藍','黑色','不含G分量，無法反射'],
+      ['黃（R+G）','綠色','含G分量，R分量因光源無R而消失'],
+      ['青（G+B）','綠色','含G分量，B分量因光源無B而消失'],
+      ['洋紅（R+B）','黑色','不含G分量，無法反射'],
+      ['白（R+G+B）','綠色','只有G分量可被反射'],
+    ]
+  },
+  blue: {
+    intro: '藍光只含<strong>藍色</strong>波長（R=0, G=0, B=1）。物體只能反射其本身含有的藍色分量；不含藍色分量的物體呈現<strong>黑色</strong>。',
+    rows: [
+      ['紅','黑色','不含B分量，無法反射'],
+      ['綠','黑色','不含B分量，無法反射'],
+      ['藍','藍色','含B分量，完整反射'],
+      ['黃（R+G）','黑色','不含B分量，無法反射'],
+      ['青（G+B）','藍色','含B分量，G分量因光源無G而消失'],
+      ['洋紅（R+B）','藍色','含B分量，R分量因光源無R而消失'],
+      ['白（R+G+B）','藍色','只有B分量可被反射'],
+    ]
+  },
+  yellow: {
+    intro: '黃光含<strong>紅色＋綠色</strong>波長（R=1, G=1, B=0），是紅光與綠光的混合。物體能反射其本身含有的紅色及綠色分量；不含紅或綠分量的物體呈現<strong>黑色</strong>。',
+    rows: [
+      ['紅','紅色','含R分量，在黃光下反射紅色'],
+      ['綠','綠色','含G分量，在黃光下反射綠色'],
+      ['藍','黑色','不含R或G分量，無法反射'],
+      ['黃（R+G）','黃色','含R+G分量，完整反射，呈現黃色'],
+      ['青（G+B）','綠色','含G分量，B分量因光源無B而消失'],
+      ['洋紅（R+B）','紅色','含R分量，B分量因光源無B而消失'],
+      ['白（R+G+B）','黃色','R+G分量可被反射，B分量消失'],
+    ]
+  },
+  magenta: {
+    intro: '洋紅光含<strong>紅色＋藍色</strong>波長（R=1, G=0, B=1），是紅光與藍光的混合。物體能反射其本身含有的紅色及藍色分量；不含紅或藍分量的物體呈現<strong>黑色</strong>。',
+    rows: [
+      ['紅','紅色','含R分量，在洋紅光下反射紅色'],
+      ['綠','黑色','不含R或B分量，無法反射'],
+      ['藍','藍色','含B分量，在洋紅光下反射藍色'],
+      ['黃（R+G）','紅色','含R分量，G分量因光源無G而消失'],
+      ['青（G+B）','藍色','含B分量，G分量因光源無G而消失'],
+      ['洋紅（R+B）','洋紅色','含R+B分量，完整反射，呈現洋紅色'],
+      ['白（R+G+B）','洋紅色','R+B分量可被反射，G分量消失'],
+    ]
+  },
+  cyan: {
+    intro: '青光含<strong>綠色＋藍色</strong>波長（R=0, G=1, B=1），是綠光與藍光的混合。物體能反射其本身含有的綠色及藍色分量；不含綠或藍分量的物體呈現<strong>黑色</strong>。',
+    rows: [
+      ['紅','黑色','不含G或B分量，無法反射'],
+      ['綠','綠色','含G分量，在青光下反射綠色'],
+      ['藍','藍色','含B分量，在青光下反射藍色'],
+      ['黃（R+G）','綠色','含G分量，R分量因光源無R而消失'],
+      ['青（G+B）','青色','含G+B分量，完整反射，呈現青色'],
+      ['洋紅（R+B）','藍色','含B分量，R分量因光源無R而消失'],
+      ['白（R+G+B）','青色','G+B分量可被反射，R分量消失'],
+    ]
+  },
+  white: {
+    intro: '白光含<strong>紅色＋綠色＋藍色</strong>全部波長（R=1, G=1, B=1）。物體能完整反射其本身所有的顏色分量，因此在白光下物體呈現其<strong>原本的顏色</strong>。',
+    rows: [
+      ['紅','紅色','完整反射R分量'],
+      ['綠','綠色','完整反射G分量'],
+      ['藍','藍色','完整反射B分量'],
+      ['黃（R+G）','黃色','完整反射R+G分量'],
+      ['青（G+B）','青色','完整反射G+B分量'],
+      ['洋紅（R+B）','洋紅色','完整反射R+B分量'],
+      ['白（R+G+B）','白色','完整反射R+G+B分量'],
+    ]
+  },
+};
+
+function buildExplanation(lightKey) {
+  const info = LIGHTS[lightKey];
+  const exp  = EXPLANATIONS[lightKey];
+  const box  = document.getElementById('explanationBox');
+
+  const tableRows = exp.rows.map(([surface, result, reason]) => `
+    <tr>
+      <td>${surface}</td>
+      <td><strong>${result}</strong></td>
+      <td>${reason}</td>
+    </tr>`).join('');
+
+  box.innerHTML = `
+    <strong style="color:${info.hex}">【${info.label}照射原理】</strong><br><br>
+    <p style="margin-bottom:12px">${exp.intro}</p>
+    <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+      <thead>
+        <tr style="background:#ffffff15;color:#aaa">
+          <th style="padding:6px 10px;border:1px solid #ffffff22;text-align:center">原色</th>
+          <th style="padding:6px 10px;border:1px solid #ffffff22;text-align:center">照射後呈現</th>
+          <th style="padding:6px 10px;border:1px solid #ffffff22;text-align:center">原因</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    <p style="margin-top:12px;color:#999;font-size:0.82rem">
+      <strong style="color:#ccc">原理：</strong>物體的顏色取決於它所<em>反射</em>的光的波長。在色光照射下，物體只能反射與光源波長相符的顏色分量；光源中不存在的波長無法被反射，故對應分量消失。
+    </p>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+renderMix();
+updateLightEffect();
+</script>
+</body>
+</html>
